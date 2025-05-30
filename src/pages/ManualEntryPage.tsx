@@ -253,8 +253,7 @@ Answer: B`;
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                <FileText className="h-6 w-6 mr-2 text-indigo-600" />
-                Question Input
+                
               </h2>
 
               <div className="flex space-x-3">
