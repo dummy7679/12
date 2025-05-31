@@ -15,6 +15,8 @@ export function ManualEntryPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<Question[]>([]);
   const [showLatexHelper, setShowLatexHelper] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState<number | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -129,8 +131,27 @@ export function ManualEntryPage() {
     }
   };
 
-  const insertLatexTemplate = (template: string) => {
-    setBulkText(prev => prev + `[latex: ${template}]`);
+  const insertLatexTemplate = (latex: string) => {
+    if (!textareaRef.current || cursorPosition === null) return;
+
+    const text = bulkText;
+    const newText = text.slice(0, cursorPosition) + `[latex: ${latex}]` + text.slice(cursorPosition);
+    setBulkText(newText);
+
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const newPosition = cursorPosition + latex.length + 8;
+        textareaRef.current.selectionStart = newPosition;
+        textareaRef.current.selectionEnd = newPosition;
+        textareaRef.current.focus();
+      }
+    }, 0);
+  };
+
+  const handleTextareaSelect = () => {
+    if (textareaRef.current) {
+      setCursorPosition(textareaRef.current.selectionStart);
+    }
   };
 
   return (
@@ -186,45 +207,17 @@ export function ManualEntryPage() {
             </button>
 
             {showLatexHelper && (
-              <div className="mt-4 p-6 bg-gray-50 rounded-xl border border-gray-200">
-                <h3 className="text-lg font-medium text-gray-800 mb-4">LaTeX Templates</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    onClick={() => insertLatexTemplate('\\frac{a}{b}')}
-                    className="text-left p-3 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-sm transition-all"
-                  >
-                    <div className="font-medium text-gray-700">Fraction</div>
-                    <div className="text-sm text-gray-500">a/b</div>
-                  </button>
-                  <button
-                    onClick={() => insertLatexTemplate('x^2 + y^2 = z^2')}
-                    className="text-left p-3 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-sm transition-all"
-                  >
-                    <div className="font-medium text-gray-700">Pythagorean</div>
-                    <div className="text-sm text-gray-500">x² + y² = z²</div>
-                  </button>
-                  <button
-                    onClick={() => insertLatexTemplate('\\sqrt{x}')}
-                    className="text-left p-3 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-sm transition-all"
-                  >
-                    <div className="font-medium text-gray-700">Square Root</div>
-                    <div className="text-sm text-gray-500">√x</div>
-                  </button>
-                  <button
-                    onClick={() => insertLatexTemplate('\\int_{a}^{b} f(x) dx')}
-                    className="text-left p-3 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-sm transition-all"
-                  >
-                    <div className="font-medium text-gray-700">Integral</div>
-                    <div className="text-sm text-gray-500">∫ f(x) dx</div>
-                  </button>
-                </div>
+              <div className="mt-4">
+                <LatexHelper onInsert={insertLatexTemplate} />
               </div>
             )}
           </div>
 
           <textarea
+            ref={textareaRef}
             value={bulkText}
             onChange={(e) => setBulkText(e.target.value)}
+            onSelect={handleTextareaSelect}
             className="w-full h-[600px] px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm bg-gray-50"
             placeholder={`Q1. Calculate the area: [latex: A = \\pi r^2]
 [image: circle.png]
