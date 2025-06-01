@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Image as ImageIcon, AlertCircle, Save, FunctionSquare as Function } from 'lucide-react';
+import { FileText, Image as ImageIcon, AlertCircle, Save, FunctionSquare as Function, Search, X, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTestStore } from '../store/testStore';
 import { Question, QuestionOption } from '../types';
 import { MathRenderer } from '../components/MathRenderer';
+import { LatexHelper } from '../components/LatexHelper';
 import { v4 as uuidv4 } from 'uuid';
 
 export function ManualEntryPage() {
@@ -17,6 +18,19 @@ export function ManualEntryPage() {
   const [showLatexHelper, setShowLatexHelper] = useState(false);
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    'editor': true,
+    'images': false,
+    'preview': false
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -32,6 +46,14 @@ export function ManualEntryPage() {
         }));
       };
       reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (fileName: string) => {
+    setImages(prev => {
+      const newImages = { ...prev };
+      delete newImages[fileName];
+      return newImages;
     });
   };
 
@@ -107,6 +129,7 @@ export function ManualEntryPage() {
       const parsedQuestions = parseQuestions(bulkText);
       setPreview(parsedQuestions);
       setError(null);
+      toggleSection('preview');
     } catch (error) {
       setError('Failed to parse questions. Please check the format.');
     }
@@ -155,180 +178,273 @@ export function ManualEntryPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-indigo-900">Manual Question Entry</h1>
-        <p className="text-gray-600 mt-2">
-          Enter multiple questions with LaTeX and image support.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-              <FileText className="h-6 w-6 mr-2 text-indigo-600" />
-              Question Input
-            </h2>
-
-            <div className="flex space-x-3">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg flex items-center hover:bg-indigo-200 transition-colors"
-              >
-                <ImageIcon className="h-5 w-5 mr-2" />
-                Images
-              </button>
-              <button
-                onClick={handlePreview}
-                className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg flex items-center hover:bg-emerald-200 transition-colors"
-              >
-                <Function className="h-5 w-5 mr-2" />
-                Preview
-              </button>
-            </div>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Create Questions</h1>
+            <p className="mt-2 text-gray-600">
+              Enter questions with support for LaTeX equations and images
+            </p>
           </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={handleImageUpload}
-          />
-
-          <div className="mb-6">
+          
+          <div className="flex space-x-4">
             <button
-              onClick={() => setShowLatexHelper(!showLatexHelper)}
-              className="text-indigo-600 hover:text-indigo-800 font-medium"
+              onClick={handlePreview}
+              className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg flex items-center hover:bg-indigo-100 transition-all"
             >
-              {showLatexHelper ? 'Hide LaTeX Helper' : 'Show LaTeX Helper'}
+              <Function className="h-5 w-5 mr-2" />
+              Preview
             </button>
-
-            {showLatexHelper && (
-              <div className="mt-4">
-                <LatexHelper onInsert={insertLatexTemplate} />
-              </div>
-            )}
+            
+            <button
+              onClick={handleSubmit}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center hover:bg-indigo-700 transition-all"
+            >
+              <Save className="h-5 w-5 mr-2" />
+              Save Questions
+            </button>
           </div>
+        </div>
 
-          <textarea
-            ref={textareaRef}
-            value={bulkText}
-            onChange={(e) => setBulkText(e.target.value)}
-            onSelect={handleTextareaSelect}
-            className="w-full h-[600px] px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm bg-gray-50"
-            placeholder={`Q1. Calculate the area: [latex: A = \\pi r^2]
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-6">
+            {/* Editor Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <button
+                onClick={() => toggleSection('editor')}
+                className="w-full px-6 py-4 flex items-center justify-between text-left border-b border-gray-200"
+              >
+                <div className="flex items-center">
+                  <FileText className="h-5 w-5 text-indigo-600 mr-2" />
+                  <span className="font-medium text-gray-900">Question Editor</span>
+                </div>
+                {expandedSections.editor ? (
+                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                )}
+              </button>
+              
+              {expandedSections.editor && (
+                <div className="p-6">
+                  <div className="mb-4">
+                    <button
+                      onClick={() => setShowLatexHelper(!showLatexHelper)}
+                      className="text-indigo-600 hover:text-indigo-800 font-medium flex items-center"
+                    >
+                      {showLatexHelper ? 'Hide LaTeX Helper' : 'Show LaTeX Helper'}
+                      {showLatexHelper ? (
+                        <ChevronDown className="h-4 w-4 ml-1" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      )}
+                    </button>
+
+                    {showLatexHelper && (
+                      <div className="mt-4">
+                        <LatexHelper onInsert={insertLatexTemplate} />
+                      </div>
+                    )}
+                  </div>
+
+                  <textarea
+                    ref={textareaRef}
+                    value={bulkText}
+                    onChange={(e) => setBulkText(e.target.value)}
+                    onSelect={handleTextareaSelect}
+                    className="w-full h-[400px] px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm resize-none"
+                    placeholder={`Q1. Calculate the area: [latex: A = \\pi r^2]
 [image: circle.png]
 A. [latex: 12\\pi]
 B. [latex: 16\\pi]
 C. [latex: 20\\pi]
 D. [latex: 25\\pi]
 Answer: B`}
-          />
+                  />
 
-          {error && (
-            <div className="mt-4 flex items-center bg-red-50 text-red-700 p-4 rounded-lg">
-              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
-              <p>{error}</p>
+                  {error && (
+                    <div className="mt-4 flex items-center bg-red-50 text-red-700 p-4 rounded-lg">
+                      <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+                      <p>{error}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        <div className="space-y-8">
-          {Object.keys(images).length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Uploaded Images</h3>
-              <div className="grid grid-cols-2 gap-6">
-                {Object.entries(images).map(([name, src]) => (
-                  <div key={name} className="relative group">
-                    <img
-                      src={src}
-                      alt={name}
-                      className="w-full h-48 object-cover rounded-lg border border-gray-200"
+            {/* Image Upload Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <button
+                onClick={() => toggleSection('images')}
+                className="w-full px-6 py-4 flex items-center justify-between text-left border-b border-gray-200"
+              >
+                <div className="flex items-center">
+                  <ImageIcon className="h-5 w-5 text-indigo-600 mr-2" />
+                  <span className="font-medium text-gray-900">Images</span>
+                  {Object.keys(images).length > 0 && (
+                    <span className="ml-2 px-2 py-0.5 text-xs bg-indigo-100 text-indigo-600 rounded-full">
+                      {Object.keys(images).length}
+                    </span>
+                  )}
+                </div>
+                {expandedSections.images ? (
+                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                )}
+              </button>
+              
+              {expandedSections.images && (
+                <div className="p-6">
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-indigo-500 transition-colors"
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleImageUpload}
                     />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-sm p-3 rounded-b-lg">
-                      {name}
+                    <div className="flex flex-col items-center">
+                      <Plus className="h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-sm font-medium text-gray-900">Upload Images</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Click or drag and drop
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {preview.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <h3 className="text-xl font-semibold text-gray-800 mb-6">Preview</h3>
-              <div className="space-y-8">
-                {preview.map((question, index) => (
-                  <div key={question.id} className="border-b border-gray-200 pb-6 last:border-0">
-                    <div className="flex items-start space-x-4">
-                      <span className="font-medium text-gray-700">Q{index + 1}.</span>
-                      <div className="flex-1">
-                        <div className="text-gray-800">
-                          {question.text}
+                  {Object.keys(images).length > 0 && (
+                    <div className="mt-6 grid grid-cols-2 gap-4">
+                      {Object.entries(images).map(([name, src]) => (
+                        <div key={name} className="relative group">
+                          <img
+                            src={src}
+                            alt={name}
+                            className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeImage(name);
+                              }}
+                              className="p-1 bg-red-600 text-white rounded-full hover:bg-red-700"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-600 truncate">{name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Preview Section */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <button
+              onClick={() => toggleSection('preview')}
+              className="w-full px-6 py-4 flex items-center justify-between text-left border-b border-gray-200"
+            >
+              <div className="flex items-center">
+                <Search className="h-5 w-5 text-indigo-600 mr-2" />
+                <span className="font-medium text-gray-900">Preview</span>
+                {preview.length > 0 && (
+                  <span className="ml-2 px-2 py-0.5 text-xs bg-indigo-100 text-indigo-600 rounded-full">
+                    {preview.length} questions
+                  </span>
+                )}
+              </div>
+              {expandedSections.preview ? (
+                <ChevronDown className="h-5 w-5 text-gray-400" />
+              ) : (
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              )}
+            </button>
+            
+            {expandedSections.preview && (
+              <div className="p-6">
+                {preview.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">
+                      Click the Preview button to see your questions here
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {preview.map((question, index) => (
+                      <div
+                        key={question.id}
+                        className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <h3 className="text-lg font-medium text-gray-900">
+                            Question {index + 1}
+                          </h3>
+                        </div>
+
+                        <div className="space-y-3">
+                          <p className="text-gray-800">{question.text}</p>
+                          
                           {question.latex && (
-                            <div className="mt-3">
-                              <MathRenderer latex={question.latex} block />
+                            <div className="bg-gray-50 p-3 rounded-lg">
+                              <MathRenderer latex={question.latex} />
                             </div>
                           )}
-                        </div>
-                        {question.imagePath && (
-                          <img
-                            src={question.imagePath}
-                            alt={`Question ${index + 1}`}
-                            className="mt-4 max-h-64 rounded-lg border border-gray-200"
-                          />
-                        )}
-                        <div className="mt-4 space-y-3">
-                          {question.options.map((option, optIndex) => (
-                            <div
-                              key={option.id}
-                              className={`flex items-center p-3 rounded-lg ${
-                                optIndex === question.correctOptionIndex
-                                  ? 'bg-green-50 border border-green-200'
-                                  : 'hover:bg-gray-50 border border-gray-200'
-                              }`}
-                            >
-                              <span className="w-8 font-medium text-gray-700">
-                                {String.fromCharCode(65 + optIndex)}.
-                              </span>
-                              <div className="flex items-center">
-                                <span>{option.text}</span>
+
+                          {question.imagePath && (
+                            <img
+                              src={question.imagePath}
+                              alt={`Question ${index + 1}`}
+                              className="max-h-48 rounded-lg border border-gray-200"
+                            />
+                          )}
+
+                          <div className="space-y-2 mt-4">
+                            {question.options.map((option, optIndex) => (
+                              <div
+                                key={option.id}
+                                className={`p-3 rounded-lg flex items-center ${
+                                  optIndex === question.correctOptionIndex
+                                    ? 'bg-green-50 border border-green-200'
+                                    : 'bg-gray-50 border border-gray-200'
+                                }`}
+                              >
+                                <span className="w-6 font-medium text-gray-700">
+                                  {String.fromCharCode(65 + optIndex)}.
+                                </span>
+                                <span className="flex-1">{option.text}</span>
                                 {option.latex && (
-                                  <MathRenderer latex={option.latex} className="ml-2" />
+                                  <div className="ml-2">
+                                    <MathRenderer latex={option.latex} />
+                                  </div>
                                 )}
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="mt-8 flex justify-end">
-        <button
-          onClick={handleSubmit}
-          className="px-8 py-3 bg-indigo-600 text-white rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
-        >
-          <Save className="h-5 w-5 mr-2" />
-          Save and Continue
-        </button>
-      </div>
-
-      <div className="mt-12 bg-amber-50 p-8 rounded-xl">
-        <h2 className="text-xl font-semibold text-amber-800 mb-4">Format Instructions</h2>
-        <p className="text-gray-700 mb-4">
-          Use the following format to manually enter questions:
-        </p>
-        <pre className="bg-white p-6 rounded-lg border border-amber-200 text-sm overflow-x-auto">
+        <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Format Guide</h2>
+          <div className="prose prose-indigo max-w-none">
+            <pre className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm overflow-x-auto">
 {`Q1. Your question text here [latex: \\frac{x}{2} = 5]
 [image: filename.png]  (optional)
 A. First option [latex: x = 10]
@@ -336,33 +452,27 @@ B. Second option
 C. Third option [latex: x = 8]
 D. Fourth option
 Answer: A`}
-        </pre>
-        <ul className="mt-6 space-y-3 text-gray-600">
-          <li className="flex items-center">
-            <span className="w-2 h-2 bg-amber-500 rounded-full mr-3"></span>
-            Start each question with "Q\" and a number (e.g., Q1.)
-          </li>
-          <li className="flex items-center">
-            <span className="w-2 h-2 bg-amber-500 rounded-full mr-3"></span>
-            Include 4 options labeled A to D
-          </li>
-          <li className="flex items-center">
-            <span className="w-2 h-2 bg-amber-500 rounded-full mr-3"></span>
-            Use [latex: ...] for math equations
-          </li>
-          <li className="flex items-center">
-            <span className="w-2 h-2 bg-amber-500 rounded-full mr-3"></span>
-            Use [image: filename] to embed images
-          </li>
-          <li className="flex items-center">
-            <span className="w-2 h-2 bg-amber-500 rounded-full mr-3"></span>
-            Image files must be uploaded before referencing
-          </li>
-          <li className="flex items-center">
-            <span className="w-2 h-2 bg-amber-500 rounded-full mr-3"></span>
-            Correct answer should be stated with "Answer: X"
-          </li>
-        </ul>
+            </pre>
+            <ul className="mt-4 space-y-2">
+              <li className="flex items-center text-gray-700">
+                <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2"></span>
+                Start each question with "Q" followed by a number
+              </li>
+              <li className="flex items-center text-gray-700">
+                <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2"></span>
+                Use [latex: ...] for mathematical equations
+              </li>
+              <li className="flex items-center text-gray-700">
+                <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2"></span>
+                Include exactly 4 options labeled A through D
+              </li>
+              <li className="flex items-center text-gray-700">
+                <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2"></span>
+                Specify the correct answer with "Answer: X"
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );
