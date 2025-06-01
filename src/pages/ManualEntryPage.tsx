@@ -456,7 +456,7 @@ Answer: A`}
             <ul className="mt-4 space-y-2">
               <li className="flex items-center text-gray-700">
                 <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2"></span>
-                Start each question with "Q" followed by a number
+                Start each question with "Q\" followed by a number
               </li>
               <li className="flex items-center text-gray-700">
                 <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2"></span>
