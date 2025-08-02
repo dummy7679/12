@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Save, Plus, Trash2, Edit2, Check, AlertTriangle } from 'lucide-react';
+import { Save, Plus, Trash2, Edit2, Check, AlertTriangle, Share, Copy } from 'lucide-react';
 import { useTestStore } from '../store/testStore';
-import { Question, QuestionOption } from '../types';
+import { Question, QuestionOption, QuestionType } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export function PreviewPage() {
@@ -23,6 +23,10 @@ export function PreviewPage() {
   const [options, setOptions] = useState<QuestionOption[]>([]);
   const [correctOptionIndex, setCorrectOptionIndex] = useState(0);
 
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [testCode, setTestCode] = useState('');
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     if (testId && !currentTest) {
       const test = savedTests.find(t => t.id === testId);
@@ -33,6 +37,10 @@ export function PreviewPage() {
 
     if (!currentTest && !testId) {
       navigate('/upload');
+    }
+    
+    if (currentTest) {
+      setTestCode(currentTest.id);
     }
   }, [currentTest, testId, savedTests, navigate]);
 
@@ -72,6 +80,7 @@ export function PreviewPage() {
     }
 
     const questionData = {
+      type: QuestionType.MULTIPLE_CHOICE,
       text: questionText.trim(),
       options: validOptions,
       correctOptionIndex
@@ -111,6 +120,21 @@ export function PreviewPage() {
     navigate('/settings');
   };
 
+  const handleShareTest = () => {
+    setShowShareModal(true);
+  };
+
+  const copyTestCode = async () => {
+    try {
+      const testUrl = `${window.location.origin}/student-test/${testCode}`;
+      await navigator.clipboard.writeText(testUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
   if (!currentTest) {
     return <div className="text-center">Loading...</div>;
   }
@@ -131,6 +155,13 @@ export function PreviewPage() {
             Add Question
           </button>
 
+          <button
+            onClick={handleShareTest}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md flex items-center hover:bg-blue-700"
+          >
+            <Share className="h-4 w-4 mr-1" />
+            Share Test
+          </button>
           <button
             onClick={handleSaveTest}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md flex items-center hover:bg-indigo-700"
@@ -286,6 +317,53 @@ export function PreviewPage() {
             <Save className="h-5 w-5 mr-2" />
             Save and Continue to Test Settings
           </button>
+        </div>
+      )}
+      
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Share Test with Students</h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Test URL
+              </label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={`${window.location.origin}/student-test/${testCode}`}
+                  readOnly
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                />
+                <button
+                  onClick={copyTestCode}
+                  className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center"
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Test Code
+              </label>
+              <div className="text-2xl font-mono font-bold text-center py-3 bg-gray-100 rounded-lg">
+                {testCode.slice(0, 8).toUpperCase()}
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, AlertCircle, CheckCircle, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { useTestStore } from '../store/testStore';
-import { Question, SecurityViolationType } from '../types';
+import { Question, SecurityViolationType, QuestionType } from '../types';
 import { setupSecurityMonitoring, exitFullscreen } from '../utils/security';
 import { MathRenderer } from '../components/MathRenderer';
 
@@ -11,10 +11,11 @@ export function TestPage() {
   const { activeTest, submitTest, recordViolation } = useTestStore();
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, any>>({});
   const [remainingTime, setRemainingTime] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [studentInfo, setStudentInfo] = useState<any>(null);
   
   const timerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -27,6 +28,12 @@ export function TestPage() {
     if (!activeTest) {
       navigate('/');
       return;
+    }
+    
+    // Get student info if taking test as student
+    const storedStudent = localStorage.getItem('currentStudent');
+    if (storedStudent) {
+      setStudentInfo(JSON.parse(storedStudent));
     }
     
     if (activeTest.settings.shuffleQuestions) {
@@ -82,10 +89,10 @@ export function TestPage() {
     }
   };
   
-  const handleSelectAnswer = (questionId: string, optionIndex: number) => {
+  const handleSelectAnswer = (questionId: string, answer: any) => {
     setSelectedAnswers((prev) => ({
       ...prev,
-      [questionId]: optionIndex
+      [questionId]: answer
     }));
   };
   
@@ -141,6 +148,93 @@ export function TestPage() {
   const currentQuestion = questions.current[currentQuestionIndex];
   const answeredQuestionsCount = Object.keys(selectedAnswers).length;
   
+  const renderQuestion = (question: Question) => {
+    switch (question.type) {
+      case QuestionType.MULTIPLE_CHOICE:
+        return (
+          <div className="space-y-3">
+            {question.options?.map((option, index) => (
+              <div 
+                key={option.id}
+                onClick={() => handleSelectAnswer(question.id, index)}
+                className={`p-3 border rounded-md cursor-pointer flex items-center ${
+                  selectedAnswers[question.id] === index
+                    ? 'border-indigo-500 bg-indigo-50'
+                    : 'border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className={`w-6 h-6 flex-shrink-0 rounded-full border flex items-center justify-center mr-3 ${
+                  selectedAnswers[question.id] === index
+                    ? 'border-indigo-600 bg-indigo-600 text-white'
+                    : 'border-gray-400'
+                }`}>
+                  {String.fromCharCode(65 + index)}
+                </div>
+                <div className="flex items-center flex-1">
+                  <span>{option.text}</span>
+                  {option.latex && (
+                    <MathRenderer latex={option.latex} className="ml-2" />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      
+      case QuestionType.TRUE_FALSE:
+        return (
+          <div className="grid grid-cols-2 gap-4">
+            {[true, false].map((value) => (
+              <button
+                key={value.toString()}
+                onClick={() => handleSelectAnswer(question.id, value)}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  selectedAnswers[question.id] === value
+                    ? 'border-indigo-500 bg-indigo-50'
+                    : 'border-gray-200 hover:border-indigo-200 hover:bg-gray-50'
+                }`}
+              >
+                <span className="text-lg font-medium">
+                  {value ? 'True' : 'False'}
+                </span>
+              </button>
+            ))}
+          </div>
+        );
+      
+      default:
+        return (
+          <div className="space-y-3">
+            {question.options?.map((option, index) => (
+              <div 
+                key={option.id}
+                onClick={() => handleSelectAnswer(question.id, index)}
+                className={`p-3 border rounded-md cursor-pointer flex items-center ${
+                  selectedAnswers[question.id] === index
+                    ? 'border-indigo-500 bg-indigo-50'
+                    : 'border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className={`w-6 h-6 flex-shrink-0 rounded-full border flex items-center justify-center mr-3 ${
+                  selectedAnswers[question.id] === index
+                    ? 'border-indigo-600 bg-indigo-600 text-white'
+                    : 'border-gray-400'
+                }`}>
+                  {String.fromCharCode(65 + index)}
+                </div>
+                <div className="flex items-center flex-1">
+                  <span>{option.text}</span>
+                  {option.latex && (
+                    <MathRenderer latex={option.latex} className="ml-2" />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="bg-white rounded-lg shadow-md p-4 mb-4 flex items-center justify-between">
@@ -156,6 +250,11 @@ export function TestPage() {
           <span className="font-medium">
             {answeredQuestionsCount} of {questions.current.length} answered
           </span>
+          {studentInfo && (
+            <span className="ml-4 text-sm text-gray-600">
+              Student: {studentInfo.name}
+            </span>
+          )}
         </div>
       </div>
       
@@ -202,33 +301,7 @@ export function TestPage() {
           )}
         </div>
         
-        <div className="space-y-3">
-          {currentQuestion.options.map((option, index) => (
-            <div 
-              key={option.id}
-              onClick={() => handleSelectAnswer(currentQuestion.id, index)}
-              className={`p-3 border rounded-md cursor-pointer flex items-center ${
-                selectedAnswers[currentQuestion.id] === index
-                  ? 'border-indigo-500 bg-indigo-50'
-                  : 'border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              <div className={`w-6 h-6 flex-shrink-0 rounded-full border flex items-center justify-center mr-3 ${
-                selectedAnswers[currentQuestion.id] === index
-                  ? 'border-indigo-600 bg-indigo-600 text-white'
-                  : 'border-gray-400'
-              }`}>
-                {String.fromCharCode(65 + index)}
-              </div>
-              <div className="flex items-center flex-1">
-                <span>{option.text}</span>
-                {option.latex && (
-                  <MathRenderer latex={option.latex} className="ml-2" />
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        {renderQuestion(currentQuestion)}
       </div>
       
       <div className="flex justify-between">

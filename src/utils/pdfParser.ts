@@ -1,5 +1,5 @@
 import * as PDFJS from 'pdfjs-dist';
-import { Question, QuestionOption } from '../types';
+import { Question, QuestionOption, QuestionType } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Initialize PDF.js worker
@@ -73,6 +73,7 @@ function parseQuestionsFromText(text: string): Omit<Question, 'id'>[] {
     
     if (options.length === 4) {
       questions.push({
+        type: QuestionType.MULTIPLE_CHOICE,
         text: questionText,
         options,
         correctOptionIndex

@@ -17,6 +17,7 @@ import { SubmittedPage } from './pages/SubmittedPage';
 import { ResultsPage } from './pages/ResultsPage';
 import { UserManualPage } from './pages/UserManualPage';
 import { FAQPage } from './pages/FAQPage';
+import { StudentTestPage } from './pages/StudentTestPage';
 
 function App() {
   const { loadFromStorage } = useTestStore();
@@ -32,6 +33,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth/:mode" element={<AuthPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/student-test/:testCode" element={<StudentTestPage />} />
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<HomePage />} />
             <Route path="upload" element={<UploadPage />} />

@@ -9,9 +9,6 @@ export function Footer() {
         <p className="text-sm">
           &copy; {currentYear} EduTest Pro | Developed by Aftab Alam
         </p>
-        <p className="text-xs mt-1 text-gray-400">
-          Advanced Educational Assessment Platform | Secure & Reliable
-        </p>
       </div>
     </footer>
   );

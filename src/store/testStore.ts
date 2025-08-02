@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { Question, Test, TestSettings, TestResult } from '../types';
+import { Question, Test, TestSettings, TestResult, QuestionType } from '../types';
 
 interface TestState {
   // Current test being created/edited
@@ -20,6 +20,7 @@ interface TestState {
   addQuestion: (question: Omit<Question, 'id'>) => void;
   updateQuestion: (questionId: string, question: Omit<Question, 'id'>) => void;
   removeQuestion: (questionId: string) => void;
+  setQuestions: (questions: Question[]) => void;
   saveTest: () => void;
   
   // Actions for test taking
@@ -30,6 +31,7 @@ interface TestState {
   // Data management
   loadFromStorage: () => void;
   clearCurrentTest: () => void;
+  getTestByCode: (code: string) => Test | null;
 }
 
 // Helper to save to localStorage
@@ -97,6 +99,7 @@ export const useTestStore = create<TestState>((set, get) => ({
       const newQuestion: Question = {
         ...question,
         id: uuidv4(),
+        type: question.type || QuestionType.MULTIPLE_CHOICE,
       };
       
       const updatedTest = {
@@ -119,6 +122,19 @@ export const useTestStore = create<TestState>((set, get) => ({
       const updatedTest = {
         ...state.currentTest,
         questions: updatedQuestions,
+      };
+      
+      return { currentTest: updatedTest };
+    });
+  },
+  
+  setQuestions: (questions) => {
+    set((state) => {
+      if (!state.currentTest) return state;
+      
+      const updatedTest = {
+        ...state.currentTest,
+        questions: questions.map(q => ({ ...q, id: q.id || uuidv4() })),
       };
       
       return { currentTest: updatedTest };
@@ -236,5 +252,10 @@ export const useTestStore = create<TestState>((set, get) => ({
   
   clearCurrentTest: () => {
     set({ currentTest: null });
+  },
+  
+  getTestByCode: (code) => {
+    const { savedTests } = get();
+    return savedTests.find(test => test.id === code) || null;
   },
 }));

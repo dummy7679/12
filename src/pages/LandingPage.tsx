@@ -24,8 +24,8 @@ export function LandingPage() {
     },
     {
       icon: Users,
-      title: 'Multi-Organization Support',
-      description: 'Perfect for schools, universities, and training organizations with role-based access'
+      title: 'Student Access',
+      description: 'Students can take tests using simple test codes from anywhere'
     },
     {
       icon: Globe,
@@ -44,15 +44,15 @@ export function LandingPage() {
     },
     {
       icon: Zap,
-      title: 'Real-time Collaboration',
-      description: 'Collaborate with colleagues in real-time on test creation and management'
+      title: 'Real-time Results',
+      description: 'Get instant results and feedback after test completion'
     }
   ]
 
   const testimonials = [
     {
       name: 'Dr. Sarah Johnson',
-      role: 'Physics Professor, MIT',
+      role: 'Physics Professor',
       content: 'The LaTeX support for complex equations is outstanding. My students love the interactive interface.',
       rating: 5
     },
@@ -64,7 +64,7 @@ export function LandingPage() {
     },
     {
       name: 'Lisa Chen',
-      role: 'Training Manager, TechCorp',
+      role: 'Training Manager',
       content: 'Perfect for corporate training assessments. The analytics help us track employee progress effectively.',
       rating: 5
     }
@@ -107,10 +107,10 @@ export function LandingPage() {
               </Link>
               
               <Link
-                to="/demo"
+                to="/auth/signin"
                 className="inline-flex items-center px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all duration-200 shadow-lg"
               >
-                View Demo
+                Sign In
                 <Target className="ml-2 h-5 w-5" />
               </Link>
             </div>
@@ -141,7 +141,7 @@ export function LandingPage() {
               Everything You Need for Modern Assessment
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Powerful features designed for educators, students, and organizations
+              Powerful features designed for educators and students
             </p>
           </div>
           
@@ -280,10 +280,10 @@ export function LandingPage() {
             </Link>
             
             <Link
-              to="/contact"
+              to="/auth/signin"
               className="inline-flex items-center px-8 py-4 bg-transparent text-white font-semibold rounded-xl border-2 border-white hover:bg-white hover:text-indigo-600 transition-all duration-200"
             >
-              Contact Sales
+              Sign In
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </div>
@@ -291,50 +291,9 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center mb-4">
-                <BookOpen className="h-8 w-8 text-indigo-400 mr-2" />
-                <span className="text-xl font-bold">EduTest Pro</span>
-              </div>
-              <p className="text-gray-400">
-                The ultimate platform for modern educational assessment.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link to="/features" className="hover:text-white">Features</Link></li>
-                <li><Link to="/pricing" className="hover:text-white">Pricing</Link></li>
-                <li><Link to="/demo" className="hover:text-white">Demo</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Support</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link to="/help" className="hover:text-white">Help Center</Link></li>
-                <li><Link to="/contact" className="hover:text-white">Contact</Link></li>
-                <li><Link to="/status" className="hover:text-white">Status</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link to="/about" className="hover:text-white">About</Link></li>
-                <li><Link to="/blog" className="hover:text-white">Blog</Link></li>
-                <li><Link to="/careers" className="hover:text-white">Careers</Link></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 EduTest Pro. Developed by Aftab Alam. All rights reserved.</p>
-          </div>
+      <footer className="bg-gray-900 text-white py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p>&copy; 2024 EduTest Pro. Developed by Aftab Alam.</p>
         </div>
       </footer>
     </div>
